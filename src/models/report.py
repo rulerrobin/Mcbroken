@@ -9,11 +9,22 @@ class Report(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     time_reported = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Foreign Keys
+    location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     # Do cascade deletes later for links
+    # Relationships
+    location = db.relationship('Location', back_populates='reports')
+
 
 # Returning userSchema is only for admins unless searched username is same as user
 class ReportSchema(ma.Schema):
-    users = fields.List(fields.Nested('UserSchema', exclude=['email', 'password']))
+
+    # Schema Connections
+
+    # Location first as to show where 
+    location = fields.List(fields.Nested('locationSchema'))
+
+    comments = fields.List(fields.Nested('CommentSchema', exclude=['id']))
 
     class Meta:
-        fields = ('time_reported', 'users')
+        fields = ('id','time_reported', 'comments')
