@@ -15,6 +15,7 @@ class User(db.Model):
 
     # Relationships
     reports = db.relationship('Report', backref='user', cascade='all, delete')
+    comments = db.relationship('Comment', backref='user', cascade='all, delete')
 
 
 # Returning userSchema is only for admins unless searched username is same as user
@@ -23,4 +24,4 @@ class UserSchema(ma.Schema):
     # possible future version will have reputation
 
     class Meta:
-        fields = ('username', 'email', 'password')
+        fields = ('username', 'email', 'password', 'is_admin')
