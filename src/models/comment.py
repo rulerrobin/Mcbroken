@@ -11,11 +11,19 @@ class Comment(db.Model):
     comment = db.Column(db.Text)
     time_posted = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Foreign Keys
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+
     # Do cascade deletes later for links
+
+    # Relationships
+    report = db.relationship('Report', back_populates='comments', cascade='all, delete')
+
 
 # Returning userSchema is only for admins unless searched username is same as user
 class CommentSchema(ma.Schema):
 
+    user = fields.Nested('UserSchema', only=['username'])
 
     class Meta:
-        fields = ('comment', 'time_posted', 'password')
+        fields = ('id', 'user','comment','date_created', 'time_posted')
