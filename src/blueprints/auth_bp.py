@@ -7,5 +7,6 @@ from init import db, bcrypt
 
 cli_bp = Blueprint('db', __name__) # unique name, typically __name__ dunder
 
-@cli_bp.cli.command('create') # Create tables
-    def create_db():
+# @cli_bp.cli.command('create') # Create tables
+#     def create_db():
+#     pass
