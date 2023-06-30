@@ -51,6 +51,8 @@ def login():
     try:
         stmt = db.select(User).filter_by(username=request.json['username']) # Filter by username to login
         user = db.session.scalar(stmt)
+    except:
+        pass
 
 
 

@@ -12,13 +12,14 @@ class Comment(db.Model):
     time_posted = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Foreign Keys
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    report_id = db.Column(db.Integer, db.ForeignKey('reports.id', ondelete='CASCADE'), nullable=False)
 
     # Do cascade deletes later for links
 
     # Relationships
     report = db.relationship('Report', back_populates='comments', cascade='all, delete')
-    user = db.relationship('User', backref='comments')
+    user = db.relationship('User', backref='comments', cascade='all, delete')
 
 
 # Returning userSchema is only for admins unless searched username is same as user
