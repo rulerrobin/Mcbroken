@@ -11,6 +11,7 @@ itsdangerous==2.1.2
 Jinja2==3.1.2
 MarkupSafe==2.1.3
 marshmallow==3.19.0
+marshmallow-sqlalchemy==0.29.0
 packaging==23.1
 PyJWT==2.7.0
 pyscopg2==66.0.2

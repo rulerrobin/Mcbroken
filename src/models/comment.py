@@ -24,7 +24,7 @@ class Comment(db.Model):
 # Returning userSchema is only for admins unless searched username is same as user
 class CommentSchema(ma.Schema):
 
-    user = fields.Nested('UserSchema', only=['username'])
+    user = fields.Nested('UserSchema', exclude=['id', 'email', 'password', 'is_admin'])
 
     class Meta:
         fields = ('id', 'user','comment','date_created', 'time_posted')

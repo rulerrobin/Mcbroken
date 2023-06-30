@@ -26,7 +26,7 @@ class ReportSchema(ma.Schema):
 
     # Schema Connections
     location = fields.List(fields.Nested('LocationSchema'))
-    user = fields.Nested('UserSchema', only=('username'))
+    user = fields.Nested('UserSchema', exclude=['id', 'email', 'password', 'is_admin'])
     comments = fields.List(fields.Nested('CommentSchema', exclude=['id']))
 
     class Meta:
