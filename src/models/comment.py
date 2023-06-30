@@ -18,6 +18,7 @@ class Comment(db.Model):
 
     # Relationships
     report = db.relationship('Report', back_populates='comments', cascade='all, delete')
+    user = db.relationship('User', backref='comments')
 
 
 # Returning userSchema is only for admins unless searched username is same as user
