@@ -1,7 +1,7 @@
 # Register, login, seed
 
-from flask import Blueprint, request, abort, Flask
-from datetime import date, timedelta
+from flask import Blueprint, request, abort
+from datetime import timedelta
 from models.user import User, UserSchema
 from models.comment import Comment
 from sqlalchemy.exc import IntegrityError
@@ -35,6 +35,7 @@ def delete_user(username):
     else:
         return {'Error': 'User not found'}, 404
     
+# View all users admin required
 @auth_bp.route('/')
 @jwt_required()
 def all_users():
@@ -43,6 +44,7 @@ def all_users():
     users = db.session.scalars(stmt)
     return UserSchema(many=True, exclude=['password']).dump(users)
 
+# View users if name available
 @auth_bp.route('/<string:username>')
 @jwt_required()
 def search_user(username):
@@ -73,11 +75,13 @@ def register():
         # Returns new user if successful
 
         return UserSchema(exclude=['password']).dump(user), 201
-    except IntegrityError:
-        if 'email' in str(e):
-            return {'error': 'Email address already in use'}, 409
+    except IntegrityError as e:
+        if 'email' in str(e) and 'username' in str(e):
+            return {'error': 'Email address and username already in use'}, 409
         elif 'username' in str(e):
             return {'error': 'Username already in use'}, 409
+        elif 'email' in str(e):
+            return {'error': 'Email address already in use'}, 409        
 
 
 # Login to account

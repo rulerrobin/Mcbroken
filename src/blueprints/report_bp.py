@@ -1,6 +1,7 @@
 # create and update reports
 
 from flask import Blueprint, request, jsonify
+from sqlalchemy import join, desc
 from models.report import Report, ReportSchema
 from models.location import Location
 from models.user import User
@@ -16,6 +17,14 @@ def all_reports():
     stmt = db.select(Report)
     reports = db.session.scalars(stmt).all() 
     return ReportSchema(many=True).dump(reports) 
+
+# Suburb Filter
+@reports_bp.route('/suburb/<string:suburb>')
+def suburb_filter(suburb):
+    # Join table to get all locations in a certain suburb
+    stmt = db.select(Report).select_from(join(Report, Location)).where(Location.suburb==suburb)
+    reports = db.session.execute(stmt).scalars().all()
+    return ReportSchema(many=True).dump(reports)
 
 # Broken Machine Filter
 @reports_bp.route('/broken')
@@ -55,7 +64,7 @@ def report_machine():
         ).first()
 
         if existing_location: # IF location combination exists returns and gives error
-            return {'error': 'Address recently reported'}, 409
+            return {'error': 'Report already exists for this location, please search using /reports/suburb/"suburb Mcdonald\s is from"'}, 409
 
         # Location adding if above is False
         location = Location(
