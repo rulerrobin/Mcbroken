@@ -1,17 +1,16 @@
 # create and update reports
 
-from flask import Blueprint, request, jsonify
-from sqlalchemy import join, desc, and_
+from flask import Blueprint, request, abort
+from sqlalchemy import join
 from models.report import Report, ReportSchema
 from models.location import Location
 from models.user import User
 from models.vote import Vote
 from models.comment import Comment, CommentSchema
-from init import db, jwt
+from init import db
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from datetime import datetime, timedelta
-from sqlalchemy.exc import IntegrityError
-from .auth_bp import admin_or_user_required
+from .auth_bp import unauthorised_error
 
 reports_bp = Blueprint('report', __name__, url_prefix='/reports')
 
@@ -124,6 +123,9 @@ def update_report(report_id):
     # Reset Votes
     Vote.query.filter_by(report_id=report_id).delete()
 
+    # Delete existing comments
+    Comment.query.filter_by(report_id=report_id).delete()
+
     # Update the user who made the update
     current_user_id = get_jwt_identity() # Get user_id from JWT Token
     current_user = User.query.get(current_user_id) # Get user from db
@@ -133,6 +135,7 @@ def update_report(report_id):
 
     return {"Message": "Report has been updated successfully"}, 201
 
+# Upvote
 @reports_bp.route('/<int:report_id>/upvote', methods=['POST'])
 @jwt_required()
 def upvote_report(report_id):
@@ -161,6 +164,7 @@ def upvote_report(report_id):
 
     return {"message": "Upvote successful"}, 201
 
+# Downvote
 @reports_bp.route('/<int:report_id>/downvote', methods=['POST'])
 @jwt_required()
 def downvote_report(report_id):
@@ -190,7 +194,7 @@ def downvote_report(report_id):
     return {"message": "Downvote successful"}, 201
 
 # Comments
-
+# Create Comment
 @reports_bp.route('/<int:report_id>/comment', methods=['POST'])
 @jwt_required()
 def create_comment(report_id):
@@ -223,27 +227,54 @@ def create_comment(report_id):
 @jwt_required()
 def edit_comment(report_id, comment_id):
 
-    admin_or_user_required()
-
     report = Report.query.get(report_id)
-    comment = Comment.query.get(comment_id)
-
     if not report:
         return report_not_found_error()
 
-    current_user_id = get_jwt_identity()
-
-    comment = Comment.query.filter_by(id=comment_id, user_id=current_user_id, report_id=report_id).first()
+    comment = Comment.query.filter_by(id=comment_id, report_id=report_id).first()
 
     if not comment:
         return comment_not_found_error()
 
-
     # Get new comment info
     comment_info = CommentSchema().load(request.json)
+
+    current_user_id = get_jwt_identity()
+
+    if comment.user_id != current_user_id:
+        return unauthorised_error()
 
     # Update comment
     comment.comment = comment_info['comment']
     db.session.commit()
 
     return 'Comment updated successfully'
+
+
+# Delete Comments
+@reports_bp.route('/<int:report_id>/comment/<int:comment_id>', methods=['DELETE'])
+@jwt_required()
+def delete_comment(report_id, comment_id):
+
+    # Check if user is authorised
+
+
+    report = Report.query.get(report_id)
+    if not report:
+        return report_not_found_error()
+
+    comment = Comment.query.filter_by(id=comment_id, report_id=report_id).first()
+
+    if not comment:
+        return comment_not_found_error()
+    
+    current_user_id = get_jwt_identity()
+
+    if comment.user_id != current_user_id:
+        return unauthorised_error()    
+
+    # Delete the comment
+    db.session.delete(comment)
+    db.session.commit()
+
+    return 'Comment deleted successfully'
