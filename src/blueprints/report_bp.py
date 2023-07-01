@@ -81,22 +81,24 @@ def report_machine():
 @jwt_required()
 def update_report(report_id):
  
-    report = Report.query.get(report_id)
+    report = Report.query.get(report_id) # Gets report with report id
 
     if not report: 
         error_message = {"error": "Report not found"}
         return jsonify(error_message), 404
 
     # Time check if 15 minutes have passed since last update/creation
-    time_threshold = report.time_reported + timedelta(minutes=1) # Checks what is report time + 15 minutes and puts in time_threshold
-    if time_threshold > datetime.utcnow(): # compares time_threshold to current time and if over current time then update
+    time_threshold = report.time_reported + timedelta(minutes=15) # Checks what is report time + 15 minutes and puts in time_threshold
+    if datetime.utcnow() < time_threshold: # compares time_threshold to current time and if over current time then update
         update_time = time_threshold.strftime("%Y-%m-%d %H:%M:%S") # Format time as string
         return {"error": f"Cannot update the report. Next update available at: {update_time}"}, 400 # Return error and when it can be updated
 
     # Update the report 
     report_info = ReportSchema().load(request.json)
-    report.broken = report_info['broken']
+    report.broken = report_info['broken'] # Update boolean value
 
+    # Update report/update time
+    report.time_reported = datetime.utcnow() # With current time
 
     # Update the user who made the update
     current_user_id = get_jwt_identity() # Get user_id from JWT Token
