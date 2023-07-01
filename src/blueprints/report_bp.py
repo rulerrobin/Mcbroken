@@ -223,21 +223,22 @@ def create_comment(report_id):
 @jwt_required()
 def edit_comment(report_id, comment_id):
 
+    admin_or_user_required()
+
     report = Report.query.get(report_id)
     comment = Comment.query.get(comment_id)
 
     if not report:
         return report_not_found_error()
 
-    
     current_user_id = get_jwt_identity()
-    current_user = User.query.get(current_user_id)
-    
+
     comment = Comment.query.filter_by(id=comment_id, user_id=current_user_id, report_id=report_id).first()
 
     if not comment:
         return comment_not_found_error()
-    
+
+
     # Get new comment info
     comment_info = CommentSchema().load(request.json)
 
