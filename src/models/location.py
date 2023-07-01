@@ -1,6 +1,6 @@
 # location schema
 from init import db, ma
-from marshmallow import fields
+from sqlalchemy import UniqueConstraint
 
 class Location(db.Model):
     __tablename__ = 'locations'
@@ -12,9 +12,15 @@ class Location(db.Model):
     suburb = db.Column(db.String(100), nullable = False)
     state = db.Column(db.String(20), nullable = False)
 
+    # Unique constraint for the combination of all columns
+    __table_args__ = (
+        UniqueConstraint('number', 'street', 'postcode', 'suburb', 'state', name='uq_location_details'),
+    )
+
 
     # Do cascade deletes later for links
-    reports = db.relationship('Report', back_populates='location', cascade='all, delete') # Relates to report model in db
+    reports = db.relationship('Report', back_populates='location', cascade='all, delete', lazy='dynamic') # lazy part allows for more control(filters)
+    # Relates to report model in db
 
 # Returning userSchema is only for admins unless searched username is same as user
 class LocationSchema(ma.Schema):

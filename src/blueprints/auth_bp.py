@@ -1,11 +1,11 @@
 # Register, login, seed
 
 from flask import Blueprint, request, abort, Flask
-from datetime import date
+from datetime import date, timedelta
 from models.user import User, UserSchema
 from sqlalchemy.exc import IntegrityError
 from init import db, bcrypt
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 
 cli_bp = Blueprint('db', __name__) # unique name, typically __name__ dunder
 
@@ -51,9 +51,14 @@ def login():
     try:
         stmt = db.select(User).filter_by(username=request.json['username']) # Filter by username to login
         user = db.session.scalar(stmt)
-    except:
-        pass
 
+        if user and bcrypt.check_password_hash(user.password, request.json['password']): # Checks user is true and password is correct
+            token = create_access_token(identity=user.id, expires_delta=timedelta(days=1))
+            return {'token': token, 'user': UserSchema(exclude=['password']).dump(user)}
+        else:
+            return {'error': 'Invalid email address or password'}, 401        
+    except KeyError:
+        return {'error': 'Email and password are required'}, 400
 
 
 

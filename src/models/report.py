@@ -3,6 +3,7 @@ from init import db, ma
 from marshmallow import fields
 from datetime import datetime
 
+
 class Report(db.Model):
     __tablename__ = 'reports'
 
@@ -12,22 +13,23 @@ class Report(db.Model):
 
     # Foreign Keys
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
 
     # Do cascade deletes later for links
     # Relationships
     location = db.relationship('Location', back_populates='reports', cascade='all, delete')
-    user = db.relationship('User', backref='reports', cascade='all, delete')
-    comments = db.relationship('Comment', backref='report', cascade='all, delete')
+
+    user = db.relationship('User', back_populates='reports', cascade='all, delete')
+
+    comments = db.relationship('Comment', back_populates='report', cascade='all, delete')
 
 # Returning userSchema is only for admins unless searched username is same as user
 class ReportSchema(ma.Schema):
 
     # Schema Connections
-    location = fields.List(fields.Nested('LocationSchema'))
+    location = fields.Nested('LocationSchema')
     user = fields.Nested('UserSchema', exclude=['id', 'email', 'password', 'is_admin'])
     comments = fields.List(fields.Nested('CommentSchema', exclude=['id']))
 
     class Meta:
-        fields = ('id', 'location','user','time_reported', 'comments')
+        fields = ('id','broken','location','user','time_reported', 'comments')

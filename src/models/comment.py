@@ -18,9 +18,9 @@ class Comment(db.Model):
     # Do cascade deletes later for links
 
     # Relationships
-    report = db.relationship('Report', back_populates='comments', cascade='all, delete')
-    user = db.relationship('User', backref='comments', cascade='all, delete')
-
+    user = db.relationship('User', back_populates='comments')
+    report = db.relationship('Report', back_populates='comments')
+    
 
 # Returning userSchema is only for admins unless searched username is same as user
 class CommentSchema(ma.Schema):
@@ -28,4 +28,4 @@ class CommentSchema(ma.Schema):
     user = fields.Nested('UserSchema', exclude=['id', 'email', 'password', 'is_admin'])
 
     class Meta:
-        fields = ('id', 'user','comment','date_created', 'time_posted')
+        fields = ('id', 'user','comment', 'time_posted')

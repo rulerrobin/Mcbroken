@@ -45,29 +45,6 @@ def seed_db():
     db.session.add_all(users) # add changes
     db.session.commit() # Commit Changes
 
-    # Create Reports Seeds
-    reports = [
-        Report (
-            time_reported=datetime.utcnow,
-            broken = False,
-            user=users[0]
-        ),
-        Report (
-            time_reported=datetime.utcnow,
-            broken = True,
-            user=users[1]
-        ),        
-        Report (
-            time_reported=datetime.utcnow,
-            broken = False,
-            user=users[2]
-        )                
-    ]
-
-    db.session.query(Report).delete()
-    db.session.add_all(reports) # add changes
-    db.session.commit() # Commit Changes
-
     # Create Location Seed
     locations = [
         Location (
@@ -76,7 +53,6 @@ def seed_db():
             postcode = '2000',
             suburb = 'Sydney',
             state =  'NSW',
-            report=reports[0]
         ),
         Location (
             number = '183',
@@ -84,7 +60,6 @@ def seed_db():
             postcode = '2000',
             suburb = 'Sydney',
             state =  'NSW',
-            report=reports[1]
         ),      
         Location (
             number = 'G2/620',
@@ -92,7 +67,6 @@ def seed_db():
             postcode = '3000',
             suburb = 'Melbourne',
             state =  'Victoria',
-            report=reports[2]
         )           
     ]
 
@@ -100,23 +74,50 @@ def seed_db():
     db.session.add_all(locations) # add changes
     db.session.commit() # Commit Changes
 
+
+    # Create Reports Seeds
+    reports = [
+        Report (
+            time_reported=datetime.utcnow(),
+            broken = False,
+            user=users[0],
+            location=locations[0]
+        ),
+        Report (
+            time_reported=datetime.utcnow(),
+            broken = True,
+            user=users[1],
+            location=locations[1]
+        ),        
+        Report (
+            time_reported=datetime.utcnow(),
+            broken = False,
+            user=users[2],
+            location=locations[2]
+        )                
+    ]
+
+    db.session.query(Report).delete()
+    db.session.add_all(reports) # add changes
+    db.session.commit() # Commit Changes
+
     # Create Comment Seeds
     comments = [
         Comment (
             comment = 'This place never breaks down. It"s the best place to get soft serves!',
-            time_posted = datetime.utcnow,
+            time_posted = datetime.utcnow(),
             user = users[0],
             report = reports[0]
         ),
         Comment (
             comment = 'Worst place to get soft serves...',
-            time_posted = datetime.utcnow,
+            time_posted = datetime.utcnow(),
             user = users[2],
             report = reports[1]
         ),
         Comment (
             comment = 'It finally works...',
-            time_posted = datetime.utcnow,
+            time_posted = datetime.utcnow(),
             user = users[1],
             report = reports[2]
         )

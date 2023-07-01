@@ -1,5 +1,6 @@
 # user model and schema 
 from init import db, ma
+from marshmallow import fields
 
 
 class User(db.Model):
@@ -14,8 +15,8 @@ class User(db.Model):
     # Do cascade deletes later for links
 
     # Relationships
-    reports = db.relationship('Report', backref='author', cascade='all, delete')
-    comments = db.relationship('Comment', backref='user_comments', cascade='all, delete')
+    reports = db.relationship('Report', back_populates='user', cascade='all, delete')
+    comments = db.relationship('Comment', back_populates='user', cascade='all, delete')
 
 
 # Returning userSchema is only for admins unless searched username is same as user
@@ -24,4 +25,4 @@ class UserSchema(ma.Schema):
     # possible future version will have reputation
 
     class Meta:
-        fields = ('username', 'email', 'password', 'is_admin')
+        fields = ('id', 'username', 'email', 'password', 'is_admin')
