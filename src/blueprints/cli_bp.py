@@ -89,18 +89,24 @@ def seed_db():
         Report (
             time_reported=datetime.utcnow(),
             broken = False,
+            upvotes = 0,    
+            downvotes = 3,        
             user=users[0],
             location=locations[0]
         ),
         Report (
             time_reported=datetime.utcnow(),
             broken = True,
+            upvotes = 2, 
+            downvotes = 1           
             user=users[1],
             location=locations[1]
         ),        
         Report (
             time_reported=datetime.utcnow(),
             broken = False,
+            upvotes = 3,
+            downvotes = 0,
             user=users[2],
             location=locations[2]
         )                
