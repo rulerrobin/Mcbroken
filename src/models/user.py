@@ -2,7 +2,6 @@
 from init import db, ma
 from marshmallow import fields
 
-
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -12,7 +11,10 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
-    # Do cascade deletes later for links
+
+    # Add columns for upvoted and downvoted reports
+    upvoted_reports = db.relationship('Report', secondary='report_upvotes', backref='upvoters') # join tables are in report.py
+    downvoted_reports = db.relationship('Report', secondary='report_downvotes', backref='downvoters')
 
     # Relationships
     reports = db.relationship('Report', back_populates='user')

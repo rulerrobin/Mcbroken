@@ -99,7 +99,6 @@ def login():
     except KeyError:
         return {'error': 'Email and password are required'}, 400
 
-# @auth_bp.route('/')
 
 
         

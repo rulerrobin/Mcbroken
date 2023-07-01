@@ -1,7 +1,7 @@
 # create and update reports
 
 from flask import Blueprint, request, jsonify
-from sqlalchemy import join, desc
+from sqlalchemy import join, desc, and_
 from models.report import Report, ReportSchema
 from models.location import Location
 from models.user import User
@@ -12,10 +12,22 @@ from sqlalchemy.exc import IntegrityError
 
 reports_bp = Blueprint('report', __name__, url_prefix='/reports')
 
+def report_not_found_error():
+    return {"error": "Report not found"}, 400 
+
+def voted():
+    return {"error": "You have already voted this report"}, 400
+
 @reports_bp.route('/') # Get all reports
 def all_reports():
     stmt = db.select(Report)
     reports = db.session.scalars(stmt).all() 
+
+    # Get the count of upvotes and downvotes
+    for report in reports:
+        report.upvotes = report.upvoted_by.count()
+        report.downvotes = report.downvoted_by.count()
+
     return ReportSchema(many=True).dump(reports) 
 
 # Suburb Filter
@@ -93,8 +105,7 @@ def update_report(report_id):
     report = Report.query.get(report_id) # Gets report with report id
 
     if not report: 
-        error_message = {"error": "Report not found"}
-        return jsonify(error_message), 404
+        report_not_found_error()
 
     # Time check if 15 minutes have passed since last update/creation
     time_threshold = report.time_reported + timedelta(minutes=15) # Checks what is report time + 15 minutes and puts in time_threshold
@@ -105,6 +116,10 @@ def update_report(report_id):
     # Update the report 
     report_info = ReportSchema().load(request.json)
     report.broken = report_info['broken'] # Update boolean value
+
+    # Update upvotes/downvotes to 0 on each update
+    report.upvotes = 0
+    report.downvotes = 0
 
     # Update report/update time
     report.time_reported = datetime.utcnow() # With current time
@@ -117,3 +132,55 @@ def update_report(report_id):
     db.session.commit()
 
     return {"Message": "Report has been updated successfully"}
+
+@reports_bp.route('/<int:report_id>/upvote', methods=['POST'])
+@jwt_required()
+def upvote_report(report_id):
+    report = Report.query.get(report_id)
+
+    if not report:
+        report_not_found_error()
+
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    # Check if user has upvoted or downvoted already
+    has_upvoted = report in current_user.upvoted_reports
+    has_downvoted = report in current_user.downvoted_reports
+
+    if has_upvoted or has_downvoted:
+        voted()
+
+    # Upvote the report
+    current_user.upvoted_reports.append(report)
+    report.upvotes += 1
+
+    db.session.commit()
+
+    return {"Message": "Report has been upvoted successfully"}
+
+@reports_bp.route('/<int:report_id>/downvote', methods=['POST'])
+@jwt_required()
+def downvote_report(report_id):
+    report = Report.query.get(report_id)
+
+    if not report:
+        report_not_found_error()
+
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    # Check if user has upvoted or downvoted already
+    has_upvoted = report in current_user.upvoted_reports
+    has_downvoted = report in current_user.downvoted_reports
+
+    if has_upvoted or has_downvoted:
+        voted()
+
+    # Downvote the report
+    current_user.downvoted_reports.append(report)
+    report.downvotes += 1
+
+    db.session.commit()
+
+    return {"message": "Report downvoted successfully"}

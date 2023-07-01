@@ -98,7 +98,7 @@ def seed_db():
             time_reported=datetime.utcnow(),
             broken = True,
             upvotes = 2, 
-            downvotes = 1           
+            downvotes = 1,           
             user=users[1],
             location=locations[1]
         ),        
