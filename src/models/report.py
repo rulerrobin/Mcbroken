@@ -10,6 +10,8 @@ class Report(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     time_reported = db.Column(db.DateTime, default=datetime.utcnow) # Time and date posted
     broken = db.Column(db.Boolean, default=False)
+    upvotes = db.Column(db.Integer, default=0) 
+    downvotes = db.Column(db.Integer, default=0) 
 
     # Foreign Keys
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
