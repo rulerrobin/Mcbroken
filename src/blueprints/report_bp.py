@@ -73,3 +73,17 @@ def report_machine():
     except Exception as e:
         # Handle other exceptions
         return {'error': str(e)}, 500
+    
+# Update Report
+@reports_bp.route('/<int:report_id>', methods=['PUT', 'PATCH'])
+@jwt_required()
+def update_report(report_id):
+
+    stmt = db.select(Report).filter_by(id=report_id)
+    report = db.session.scalar(stmt)
+    report_info = ReportSchema().load(request.json)
+
+    report.broken = report_info['broken']
+    time_reported = date.today() ['time_reported']
+    db.session.commit() # no add as just aditing existing
+    return ReportSchema().dump(report)     

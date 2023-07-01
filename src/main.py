@@ -6,7 +6,6 @@ from blueprints.report_bp import reports_bp
 from blueprints.auth_bp import auth_bp
 
 def setup():
-
     app = Flask(__name__)
 
     app.config['JWT_SECRET_KEY'] = environ.get('JWT_KEY')
@@ -21,5 +20,6 @@ def setup():
     app.register_blueprint(cli_bp)
     app.register_blueprint(reports_bp)
     app.register_blueprint(auth_bp)
+
 
     return app
