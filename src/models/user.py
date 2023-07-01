@@ -11,11 +11,6 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
-
-    # Add columns for upvoted and downvoted reports
-    upvoted_reports = db.relationship('Report', secondary='report_upvotes', backref='upvoters') # join tables are in report.py
-    downvoted_reports = db.relationship('Report', secondary='report_downvotes', backref='downvoters')
-
     # Relationships
     reports = db.relationship('Report', back_populates='user')
     comments = db.relationship('Comment', back_populates='user', cascade='all, delete')
