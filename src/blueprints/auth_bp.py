@@ -92,7 +92,7 @@ def register():
         
         # Returns new user if successful
 
-        return UserSchema(exclude=['password']).dump(user), 201
+        return {"Message": "Registration Successful", "user" : UserSchema(exclude=['password', 'is_admin']).dump(user)}, 201
     except IntegrityError as e:
         if 'email' in str(e) and 'username' in str(e):
             return {'error': 'Email address and username already in use'}, 409
