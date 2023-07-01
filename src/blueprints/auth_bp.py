@@ -11,19 +11,22 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_tok
 cli_bp = Blueprint('db', __name__) # unique name, typically __name__ dunder
 auth_bp = Blueprint('auth', __name__, url_prefix='/users') 
 
+def unauthorised_error():
+    return {'error': 'You must be an admin or the user'}, 401
+
 def admin_required():
     user_id = get_jwt_identity()
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
     if not (user and user.is_admin):
-        abort(401, description='You must be an admin')
+        raise Exception("You must be an admin")
 
 def admin_or_user_required():
     user_id = get_jwt_identity()
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
-    if not (user and (user.is_admin or user_id == user_id)):
-        abort(401, description="You must be an admin or the user")
+    if not (user and (user.is_admin or user_id == user.id)):
+        unauthorised_error()
        
 
 @auth_bp.route('/<string:username>', methods=['DELETE'])
@@ -32,14 +35,18 @@ def delete_user(username):
     stmt = db.select(User).filter_by(username=username)
     user = db.session.scalar(stmt)
     if user:
-        admin_or_user_required()
+        try:
+            admin_or_user_required()
 
-        # Delete user comment
-        Comment.query.filter_by(user_id=user.id).delete()
-        
-        db.session.delete(user)
-        db.session.commit()
-        return {'Message': 'User deleted successfully'}, 200
+            # Delete user comment
+            Comment.query.filter_by(user_id=user.id).delete()
+            
+            db.session.delete(user)
+            db.session.commit()
+            return {'Message': 'User deleted successfully'}, 200
+        except Exception as e:
+            abort(401, description=str(e))
+
     else:
         return {'Error': 'User not found'}, 404
     
@@ -47,10 +54,13 @@ def delete_user(username):
 @auth_bp.route('/')
 @jwt_required()
 def all_users():
-    admin_required() # checks if admin otherwise aborted and given a 401 error
-    stmt = db.select(User)
-    users = db.session.scalars(stmt)
-    return UserSchema(many=True, exclude=['password']).dump(users)
+    try:
+        admin_required() # checks if admin otherwise aborted and given a 401 error
+        stmt = db.select(User)
+        users = db.session.scalars(stmt)
+        return UserSchema(many=True, exclude=['password']).dump(users)
+    except Exception as e:
+            abort(401, description=str(e))
 
 # View users if name available
 @auth_bp.route('/<string:username>')
@@ -101,7 +111,7 @@ def login():
 
         if user and bcrypt.check_password_hash(user.password, request.json['password']): # Checks user is true and password is correct
             token = create_access_token(identity=user.id, expires_delta=timedelta(days=1))
-            return {'token': token, 'user': UserSchema(exclude=['password']).dump(user)}
+            return {'token': token, 'user': UserSchema(exclude=['password', 'comments']).dump(user)}
         else:
             return {'error': 'Invalid email address or password'}, 401        
     except KeyError:
