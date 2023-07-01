@@ -137,18 +137,16 @@ def upvote_report(report_id):
         return report_not_found_error()
 
     current_user_id = get_jwt_identity()
-    current_user = User.query.get(current_user_id)
 
     # Check if the user has already upvoted or downvoted the report
-    has_upvoted = Vote.query.filter_by(report_id=report_id, user_id=current_user_id, vote_type='upvote').first()
-    has_downvoted = Vote.query.filter_by(report_id=report_id, user_id=current_user_id, vote_type='downvote').first()
+    existing_vote = Vote.query.filter_by(report_id=report_id, user_id=current_user_id).first()
 
-    if has_upvoted:
-        voted()
-
-    if has_downvoted:
-        # Remove the downvote
-        db.session.delete(has_downvoted)
+    if existing_vote:
+        if existing_vote.vote_type == 'upvote':
+            return {"message": "Already upvoted"}
+        else:
+            # Remove the downvote
+            db.session.delete(existing_vote)
 
     # Create a new Vote record for the upvote
     vote = Vote(vote_type='upvote', user_id=current_user_id, report_id=report_id)
@@ -167,18 +165,16 @@ def downvote_report(report_id):
         return report_not_found_error()
 
     current_user_id = get_jwt_identity()
-    current_user = User.query.get(current_user_id)
 
     # Check if the user has already upvoted or downvoted the report
-    has_upvoted = Vote.query.filter_by(report_id=report_id, user_id=current_user_id, vote_type='upvote').first()
-    has_downvoted = Vote.query.filter_by(report_id=report_id, user_id=current_user_id, vote_type='downvote').first()
+    existing_vote = Vote.query.filter_by(report_id=report_id, user_id=current_user_id).first()
 
-    if has_downvoted:
-        voted()
-
-    if has_upvoted:
-        # Remove the upvote
-        db.session.delete(has_upvoted)
+    if existing_vote:
+        if existing_vote.vote_type == 'downvote':
+            return {"message": "Already downvoted"}
+        else:
+            # Remove the upvote
+            db.session.delete(existing_vote)
 
     # Create a new Vote record for the downvote
     vote = Vote(vote_type='downvote', user_id=current_user_id, report_id=report_id)
