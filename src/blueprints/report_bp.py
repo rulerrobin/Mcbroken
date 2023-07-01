@@ -104,7 +104,7 @@ def update_report(report_id):
         report_not_found_error()
 
     # Time check if 15 minutes have passed since last update/creation
-    time_threshold = report.time_reported + timedelta(minutes=15) # Checks what is report time + 15 minutes and puts in time_threshold
+    time_threshold = report.time_reported + timedelta(minutes=1) # Checks what is report time + 15 minutes and puts in time_threshold
     if datetime.utcnow() < time_threshold: # compares time_threshold to current time and if over current time then update
         update_time = time_threshold.strftime("%Y-%m-%d %H:%M:%S") # Format time as string
         return {"error": f"Cannot update the report. Next update available at: {update_time}"}, 400 # Return error and when it can be updated

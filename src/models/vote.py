@@ -14,8 +14,7 @@ class Vote(db.Model):
 
     # Relationships
     user = db.relationship('User', backref='votes')
-    report = db.relationship('Report', backref='votes')
 
 class VoteSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'vote_type', 'user', 'report')
+        fields = ('id', 'vote_type')

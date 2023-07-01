@@ -140,24 +140,24 @@ def seed_db():
 
     # Create vote seeding
     votes = [
-        Vote (
-            vote_type = 'upvote',
-            user = users[0],
-            report = reports[0]
+        Vote(
+            vote_type='upvote',
+            user=users[0],
+            report=reports[0]  
         ),
-        Vote (
-            vote_type = 'downvote',
-            user = users[2],
-            report = reports[1]
+        Vote(
+            vote_type='downvote',
+            user=users[2],
+            report=reports[1] 
         ),
-        Vote (
-            vote_type = 'upvote',
-            user = users[1],
-            report = reports[2]
+        Vote(
+            vote_type='upvote',
+            user=users[1],
+            report=reports[2] 
         )
     ]
 
-    db.session.all_all(votes)
+    db.session.add_all(votes)
     db.session.commit()
 
     print ('Models seeded')
