@@ -13,7 +13,7 @@ class Report(db.Model):
 
     # Foreign Keys
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
 
     # Do cascade deletes later for links
     # Relationships

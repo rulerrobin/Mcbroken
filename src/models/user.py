@@ -15,7 +15,7 @@ class User(db.Model):
     # Do cascade deletes later for links
 
     # Relationships
-    reports = db.relationship('Report', back_populates='user', cascade='all, delete')
+    reports = db.relationship('Report', back_populates='user')
     comments = db.relationship('Comment', back_populates='user', cascade='all, delete')
 
 
