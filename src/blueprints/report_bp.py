@@ -45,19 +45,31 @@ def report_machine():
 
         # Location Details
         location_data = request.json['location']
-        location = Location(
-            number=location_data['number'],w
+        existing_location = Location.query.filter_by(
+            number=location_data['number'],
             street=location_data['street'],
             postcode=location_data['postcode'],
             suburb=location_data['suburb'],
             state=location_data['state']
-            )
+        ).first()
+
+        if existing_location: # IF location combination exists returns and gives error
+            return {'error': 'Address recently reported'}, 409
+
+        # Location adding if above is False
+        location = Location(
+            number=location_data['number'],
+            street=location_data['street'],
+            postcode=location_data['postcode'],
+            suburb=location_data['suburb'],
+            state=location_data['state']
+        )        
 
         report.location = location
         db.session.add(report)
         db.session.commit()
 
         return 'Broken machine report added successfully'
-    except IntegrityError: 
-        db.session.rollback() # Rolls back the session to discard changes
-        return {'error': 'Address recently reported'}, 409
+    except Exception as e:
+        # Handle other exceptions
+        return {'error': str(e)}, 500
