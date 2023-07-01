@@ -6,6 +6,7 @@ from models.report import Report, ReportSchema
 from models.location import Location
 from models.user import User
 from models.vote import Vote
+from models.comment import Comment, CommentSchema
 from init import db, jwt
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from datetime import datetime, timedelta
@@ -126,7 +127,7 @@ def update_report(report_id):
 
     db.session.commit()
 
-    return {"Message": "Report has been updated successfully"}
+    return {"Message": "Report has been updated successfully"}, 201
 
 @reports_bp.route('/<int:report_id>/upvote', methods=['POST'])
 @jwt_required()
@@ -154,7 +155,7 @@ def upvote_report(report_id):
 
     db.session.commit()
 
-    return {"message": "Upvote successful"}
+    return {"message": "Upvote successful"}, 201
 
 @reports_bp.route('/<int:report_id>/downvote', methods=['POST'])
 @jwt_required()
@@ -182,4 +183,33 @@ def downvote_report(report_id):
 
     db.session.commit()
 
-    return {"message": "Downvote successful"}
+    return {"message": "Downvote successful"}, 201
+
+# Comments
+
+@reports_bp.route('/<int:report_id>/comment', methods=['POST'])
+@jwt_required()
+def create_comment(report_id):
+    report = Report.query.get(report_id)
+
+    if not report:
+        return report_not_found_error()
+    
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    # Get the comment data from the request
+    comment_info = request.json
+    
+    # Create comment
+    comment = Comment (
+        comment = comment_info ['comment'],
+        time_posted = datetime.utcnow(),
+        user = current_user,
+        report = report
+    )
+
+    db.session.add(comment)
+    db.session.commit()
+
+    return 'Comment posted added successfully'

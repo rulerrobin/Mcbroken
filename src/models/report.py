@@ -27,7 +27,7 @@ class ReportSchema(ma.Schema):
     # Schema Connections
     location = fields.Nested('LocationSchema')
     user = fields.Nested('UserSchema', exclude=['id', 'email', 'password', 'is_admin'])
-    comments = fields.List(fields.Nested('CommentSchema', exclude=['id']))
+    comments = fields.List(fields.Nested('CommentSchema'))
 
     # Formats time to readable string
     time_reported = fields.DateTime(format='%Y-%m-%d %H:%M:%S')
