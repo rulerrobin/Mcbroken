@@ -4,7 +4,7 @@ from flask import Blueprint, request, abort
 from models.report import Report, ReportSchema
 from models.location import Location, LocationSchema
 from init import db
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 
@@ -78,17 +78,30 @@ def report_machine():
 @reports_bp.route('/<int:report_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_report(report_id):
-    report = Report.query.get_or_404(report_id) # returns a 404 response if no report exists with id
-
-    # Time check if 15 minutes have passed since last update/creation
-    time_threshold = report.time_reported + timedelta(minutes=15) # Checks what is report time + 15 minutes and puts in time_threshold
-    if time_threshold < datetime.utcnow(): # compares time_threshold to current time and if over current time then update
-        update_time = time_threshold.strftime("%Y-%m-%d %H:%M:%S") # Format time as string
-        return {"error": f"Cannot update the report. Next update available at: {update_time}"}, 400 # Return error and when it can be updated
-
-    # Update the report 
+    stmt = db.select(Report).filter_by(id=report_id)
+    report = db.session.scalar(stmt)
     report_info = ReportSchema().load(request.json)
-    report.broken = report_info['broken']
-    db.session.commit()
 
-    return {"Message": "Report has been updated successfully"}
+    if report:
+
+        report = Report.query.get_or_404(report_id) # returns a 404 response if no report exists with id
+
+        # Time check if 15 minutes have passed since last update/creation
+        time_threshold = report.time_reported + timedelta(minutes=15) # Checks what is report time + 15 minutes and puts in time_threshold
+        if time_threshold < datetime.utcnow(): # compares time_threshold to current time and if over current time then update
+            update_time = time_threshold.strftime("%Y-%m-%d %H:%M:%S") # Format time as string
+            return {"error": f"Cannot update the report. Next update available at: {update_time}"}, 400 # Return error and when it can be updated
+
+        # Update the report 
+        report_info = ReportSchema().load(request.json)
+        report.broken = report_info['broken']
+
+
+        # Update the user who made the update
+        report.user = current_user # gets current user
+
+        db.session.commit()
+
+        return {"Message": "Report has been updated successfully"}
+    else:
+        return {"Error": "Report not found"}
