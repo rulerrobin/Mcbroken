@@ -19,7 +19,7 @@ class User(db.Model):
 # Returning userSchema is only for admins unless searched username is same as user
 class UserSchema(ma.Schema):
 
-    # possible future version will have reputation
+    comments = fields.List(fields.Nested('CommentSchema', exclude=['user']))
 
     class Meta:
-        fields = ('id', 'username', 'email', 'password', 'is_admin')
+        fields = ('id', 'username', 'email', 'password', 'is_admin', 'comments')
