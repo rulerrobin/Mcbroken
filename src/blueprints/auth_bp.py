@@ -3,6 +3,7 @@
 from flask import Blueprint, request, abort, Flask
 from datetime import date, timedelta
 from models.user import User, UserSchema
+from models.comment import Comment
 from sqlalchemy.exc import IntegrityError
 from init import db, bcrypt
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
@@ -24,6 +25,10 @@ def delete_user(username):
     user = db.session.scalar(stmt)
     if user:
         admin_required()
+
+        # Delete user comment
+        Comment.query.filter_by(user_id=user.id).delete()
+        
         db.session.delete(user)
         db.session.commit()
         return {'Message': 'User deleted successfully'}, 200
