@@ -1,9 +1,10 @@
 # create and update reports
 
-from flask import Blueprint, request, abort
+from flask import Blueprint, request, jsonify
 from models.report import Report, ReportSchema
-from models.location import Location, LocationSchema
-from init import db
+from models.location import Location
+from models.user import User
+from init import db, jwt
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
@@ -74,34 +75,34 @@ def report_machine():
         # Handle other exceptions
         return {'error': str(e)}, 500
     
+
 # Update Report
 @reports_bp.route('/<int:report_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_report(report_id):
-    stmt = db.select(Report).filter_by(id=report_id)
-    report = db.session.scalar(stmt)
+ 
+    report = Report.query.get(report_id)
+
+    if not report: 
+        error_message = {"error": "Report not found"}
+        return jsonify(error_message), 404
+
+    # Time check if 15 minutes have passed since last update/creation
+    time_threshold = report.time_reported + timedelta(minutes=1) # Checks what is report time + 15 minutes and puts in time_threshold
+    if time_threshold > datetime.utcnow(): # compares time_threshold to current time and if over current time then update
+        update_time = time_threshold.strftime("%Y-%m-%d %H:%M:%S") # Format time as string
+        return {"error": f"Cannot update the report. Next update available at: {update_time}"}, 400 # Return error and when it can be updated
+
+    # Update the report 
     report_info = ReportSchema().load(request.json)
-
-    if report:
-
-        report = Report.query.get_or_404(report_id) # returns a 404 response if no report exists with id
-
-        # Time check if 15 minutes have passed since last update/creation
-        time_threshold = report.time_reported + timedelta(minutes=15) # Checks what is report time + 15 minutes and puts in time_threshold
-        if time_threshold < datetime.utcnow(): # compares time_threshold to current time and if over current time then update
-            update_time = time_threshold.strftime("%Y-%m-%d %H:%M:%S") # Format time as string
-            return {"error": f"Cannot update the report. Next update available at: {update_time}"}, 400 # Return error and when it can be updated
-
-        # Update the report 
-        report_info = ReportSchema().load(request.json)
-        report.broken = report_info['broken']
+    report.broken = report_info['broken']
 
 
-        # Update the user who made the update
-        report.user = current_user # gets current user
+    # Update the user who made the update
+    current_user_id = get_jwt_identity() # Get user_id from JWT Token
+    current_user = User.query.get(current_user_id) # Get user from db
+    report.user = current_user # gets current user
 
-        db.session.commit()
+    db.session.commit()
 
-        return {"Message": "Report has been updated successfully"}
-    else:
-        return {"Error": "Report not found"}
+    return {"Message": "Report has been updated successfully"}

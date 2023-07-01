@@ -20,6 +20,18 @@ def create_db():
 @cli_bp.cli.command('seed') # Fills tables with predetermined values
 def seed_db():
 
+    # Delete Comments
+    db.session.query(User).delete()
+
+    db.session.query(Location).delete()
+
+    db.session.query(Report).delete()
+
+    db.session.query(Comment).delete()
+
+    db.session.commit() # Commit Changes
+
+    # Create user seeds
     users = [
         User(
             username = 'admin',
@@ -41,7 +53,6 @@ def seed_db():
         )        
     ]
 
-    db.session.query(User).delete() # Cascade delete as reports are connected to users and comments to users and reports
     db.session.add_all(users) # add changes
     db.session.commit() # Commit Changes
 
@@ -69,11 +80,9 @@ def seed_db():
             state =  'Victoria',
         )           
     ]
-
-    db.session.query(Location).delete()
+    
     db.session.add_all(locations) # add changes
     db.session.commit() # Commit Changes
-
 
     # Create Reports Seeds
     reports = [
@@ -97,7 +106,6 @@ def seed_db():
         )                
     ]
 
-    db.session.query(Report).delete()
     db.session.add_all(reports) # add changes
     db.session.commit() # Commit Changes
 
@@ -123,7 +131,6 @@ def seed_db():
         )
     ]
 
-    db.session.query(Comment).delete()
     db.session.add_all(comments) # add changes
     db.session.commit() # Commit Changes
 
