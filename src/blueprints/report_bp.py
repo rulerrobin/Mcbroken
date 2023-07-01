@@ -81,11 +81,10 @@ def update_report(report_id):
     report = Report.query.get_or_404(report_id) # returns a 404 response if no report exists with id
 
     # Time check if 15 minutes have passed since last update/creation
-    time_threshold = datetime.utcnow() - timedelta(minutes=15)
-    if report.time_reported > time_threshold:
-        time_remaining = report.time_reported + timedelta(minutes=15) - datetime.utcnow()
-        time_remaining_str = str(time_remaining)  # Convert timedelta to string
-        return {"error": f"Cannot update the report. Reports can only be updated every 15 minutes. Time remaining: {time_remaining_str}"}, 400
+    time_threshold = report.time_reported + timedelta(minutes=15) # Checks what is report time + 15 minutes and puts in time_threshold
+    if time_threshold < datetime.utcnow(): # compares time_threshold to current time and if over current time then update
+        update_time = time_threshold.strftime("%Y-%m-%d %H:%M:%S") # Format time as string
+        return {"error": f"Cannot update the report. Next update available at: {update_time}"}, 400 # Return error and when it can be updated
 
     # Update the report 
     report_info = ReportSchema().load(request.json)
