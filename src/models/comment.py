@@ -27,5 +27,8 @@ class CommentSchema(ma.Schema):
 
     user = fields.Nested('UserSchema', exclude=['id', 'email', 'password', 'is_admin'])
 
+    # Formats time to readable string
+    time_posted = fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+
     class Meta:
         fields = ('id', 'user','comment', 'time_posted')

@@ -5,7 +5,7 @@ from models.report import Report, ReportSchema
 from models.location import Location, LocationSchema
 from init import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import date
+from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 
 reports_bp = Blueprint('report', __name__, url_prefix='/reports')
@@ -78,12 +78,18 @@ def report_machine():
 @reports_bp.route('/<int:report_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_report(report_id):
+    report = Report.query.get_or_404(report_id) # returns a 404 response if no report exists with id
 
-    stmt = db.select(Report).filter_by(id=report_id)
-    report = db.session.scalar(stmt)
+    # Time check if 15 minutes have passed since last update/creation
+    time_threshold = datetime.utcnow() - timedelta(minutes=15)
+    if report.time_reported > time_threshold:
+        time_remaining = report.time_reported + timedelta(minutes=15) - datetime.utcnow()
+        time_remaining_str = str(time_remaining)  # Convert timedelta to string
+        return {"error": f"Cannot update the report. Reports can only be updated every 15 minutes. Time remaining: {time_remaining_str}"}, 400
+
+    # Update the report 
     report_info = ReportSchema().load(request.json)
-
     report.broken = report_info['broken']
-    time_reported = date.today() ['time_reported']
-    db.session.commit() # no add as just aditing existing
-    return ReportSchema().dump(report)     
+    db.session.commit()
+
+    return {"Message": "Report has been updated successfully"}

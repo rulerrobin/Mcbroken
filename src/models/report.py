@@ -31,5 +31,8 @@ class ReportSchema(ma.Schema):
     user = fields.Nested('UserSchema', exclude=['id', 'email', 'password', 'is_admin'])
     comments = fields.List(fields.Nested('CommentSchema', exclude=['id']))
 
+    # Formats time to readable string
+    time_reported = fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+
     class Meta:
         fields = ('id','broken','location','user','time_reported', 'comments')
