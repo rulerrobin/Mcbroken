@@ -5,6 +5,7 @@ from sqlalchemy import join, desc, and_
 from models.report import Report, ReportSchema
 from models.location import Location
 from models.user import User
+from models.vote import Vote
 from init import db, jwt
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from datetime import datetime, timedelta
@@ -115,6 +116,9 @@ def update_report(report_id):
     # Update report/update time
     report.time_reported = datetime.utcnow() # With current time
 
+    # Reset Votes
+    Vote.query.filter_by(report_id=report_id).delete()
+
     # Update the user who made the update
     current_user_id = get_jwt_identity() # Get user_id from JWT Token
     current_user = User.query.get(current_user_id) # Get user from db
@@ -124,3 +128,62 @@ def update_report(report_id):
 
     return {"Message": "Report has been updated successfully"}
 
+@reports_bp.route('/<int:report_id>/upvote', methods=['POST'])
+@jwt_required()
+def upvote_report(report_id):
+    report = Report.query.get(report_id) # gets report 
+
+    if not report:
+        return report_not_found_error()
+
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    # Check if the user has already upvoted or downvoted the report
+    has_upvoted = Vote.query.filter_by(report_id=report_id, user_id=current_user_id, vote_type='upvote').first()
+    has_downvoted = Vote.query.filter_by(report_id=report_id, user_id=current_user_id, vote_type='downvote').first()
+
+    if has_upvoted:
+        voted()
+
+    if has_downvoted:
+        # Remove the downvote
+        db.session.delete(has_downvoted)
+
+    # Create a new Vote record for the upvote
+    vote = Vote(vote_type='upvote', user_id=current_user_id, report_id=report_id)
+    db.session.add(vote)
+
+    db.session.commit()
+
+    return {"message": "Upvote successful"}
+
+@reports_bp.route('/<int:report_id>/downvote', methods=['POST'])
+@jwt_required()
+def downvote_report(report_id):
+    report = Report.query.get(report_id)
+
+    if not report:
+        return report_not_found_error()
+
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    # Check if the user has already upvoted or downvoted the report
+    has_upvoted = Vote.query.filter_by(report_id=report_id, user_id=current_user_id, vote_type='upvote').first()
+    has_downvoted = Vote.query.filter_by(report_id=report_id, user_id=current_user_id, vote_type='downvote').first()
+
+    if has_downvoted:
+        voted()
+
+    if has_upvoted:
+        # Remove the upvote
+        db.session.delete(has_upvoted)
+
+    # Create a new Vote record for the downvote
+    vote = Vote(vote_type='downvote', user_id=current_user_id, report_id=report_id)
+    db.session.add(vote)
+
+    db.session.commit()
+
+    return {"message": "Downvote successful"}

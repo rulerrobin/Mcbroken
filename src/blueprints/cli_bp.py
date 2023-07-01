@@ -3,6 +3,7 @@
 from flask import Blueprint
 from datetime import datetime
 from models.user import User
+from models.vote import Vote
 from models.report import Report
 from init import db, bcrypt
 from models.comment import Comment
@@ -28,6 +29,8 @@ def seed_db():
     db.session.query(Report).delete()
 
     db.session.query(Comment).delete()
+
+    db.session.query(Vote).delete()
 
     db.session.commit() # Commit Changes
 
@@ -131,7 +134,30 @@ def seed_db():
         )
     ]
 
+
     db.session.add_all(comments) # add changes
     db.session.commit() # Commit Changes
+
+    # Create vote seeding
+    votes = [
+        Vote (
+            vote_type = 'upvote',
+            user = users[0],
+            report = reports[0]
+        ),
+        Vote (
+            vote_type = 'downvote',
+            user = users[2],
+            report = reports[1]
+        ),
+        Vote (
+            vote_type = 'upvote',
+            user = users[1],
+            report = reports[2]
+        )
+    ]
+
+    db.session.all_all(votes)
+    db.session.commit()
 
     print ('Models seeded')
