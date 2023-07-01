@@ -17,13 +17,19 @@ def admin_required():
     if not (user and user.is_admin):
         abort(401, description='You must be an admin')
 
-def admin_or_user_required(username):
-    user = User.query.filter_by(username=username).first() # Filters by username and gets first matching (unique)
-
-    if not (user and (user.is_admin or user.username == get_jwt_identity())):
-        abort(401, description="You must be an admin or the user")
-
-
+@auth_bp.route('/<string:username>', methods=['DELETE'])
+@jwt_required()
+def delete_user(username):
+    stmt = db.select(User).filter_by(username=username)
+    user = db.session.scalar(stmt)
+    if user:
+        admin_required()
+        db.session.delete(user)
+        db.session.commit()
+        return {'Message': 'User deleted successfully'}, 200
+    else:
+        return {'Error': 'User not found'}, 404
+    
 @auth_bp.route('/')
 @jwt_required()
 def all_users():
