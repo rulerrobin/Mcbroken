@@ -67,6 +67,19 @@ GET REQUEST:
 Coder Academy Notes and Slides
 
 ***
+## R5 Document all endpoints for your API
+
+Example payload to report a machine
+{
+  "broken": true,
+  "location": {
+    "number": "123",
+    "street": "Main Street",
+    "postcode": "12345",
+    "suburb": "Example Suburb",
+    "state": "Example State"
+  }
+}
 
 ## R10 Describe the way tasks are allocated and tracked in your project
 
