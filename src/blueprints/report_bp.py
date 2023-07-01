@@ -11,12 +11,15 @@ from init import db, jwt
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
-from .auth_bp import admin_or_owner_required
+from .auth_bp import admin_or_user_required
 
 reports_bp = Blueprint('report', __name__, url_prefix='/reports')
 
 def report_not_found_error():
     return {"error": "Report not found"}, 400 
+
+def comment_not_found_error():
+    return {"error": "Comment not found"}, 400 
 
 def voted():
     return {"error": "You have already voted this report"}, 400
@@ -218,27 +221,28 @@ def create_comment(report_id):
 # Edit commments
 @reports_bp.route('/<int:report_id>/comment/<int:comment_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
-def delete_comment(report_id):
+def edit_comment(report_id, comment_id):
+
     report = Report.query.get(report_id)
+    comment = Comment.query.get(comment_id)
 
     if not report:
         return report_not_found_error()
+
     
     current_user_id = get_jwt_identity()
     current_user = User.query.get(current_user_id)
-
-    # Get the comment data from the request
-    comment_info = request.json
     
-    # Create comment
-    comment = Comment (
-        comment = comment_info ['comment'],
-        time_posted = datetime.utcnow(),
-        user = current_user,
-        report = report
-    )
+    comment = Comment.query.filter_by(id=comment_id, user_id=current_user_id, report_id=report_id).first()
 
-    db.session.add(comment)
+    if not comment:
+        return comment_not_found_error()
+    
+    # Get new comment info
+    comment_info = CommentSchema().load(request.json)
+
+    # Update comment
+    comment.comment = comment_info['comment']
     db.session.commit()
 
-    return 'Comment posted added successfully'
+    return 'Comment updated successfully'

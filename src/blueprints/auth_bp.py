@@ -18,12 +18,12 @@ def admin_required():
     if not (user and user.is_admin):
         abort(401, description='You must be an admin')
 
-def admin_or_owner_required():
+def admin_or_user_required():
     user_id = get_jwt_identity()
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
     if not (user and (user.is_admin or user_id == user_id)):
-        abort(401, description="You must be an admin or the owner")
+        abort(401, description="You must be an admin or the user")
        
 
 @auth_bp.route('/<string:username>', methods=['DELETE'])
@@ -32,7 +32,7 @@ def delete_user(username):
     stmt = db.select(User).filter_by(username=username)
     user = db.session.scalar(stmt)
     if user:
-        admin_or_owner_required()
+        admin_or_user_required()
 
         # Delete user comment
         Comment.query.filter_by(user_id=user.id).delete()
