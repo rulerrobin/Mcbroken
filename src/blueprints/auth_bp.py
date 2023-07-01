@@ -6,7 +6,7 @@ from models.user import User, UserSchema
 from models.comment import Comment
 from sqlalchemy.exc import IntegrityError
 from init import db, bcrypt
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity, current_user, create_access_token
 
 cli_bp = Blueprint('db', __name__) # unique name, typically __name__ dunder
 auth_bp = Blueprint('auth', __name__, url_prefix='/users') 
@@ -29,26 +29,36 @@ def admin_or_user_required():
         unauthorised_error()
        
 
-@auth_bp.route('/<string:username>', methods=['DELETE'])
-@jwt_required()
-def delete_user(username):
-    stmt = db.select(User).filter_by(username=username)
-    user = db.session.scalar(stmt)
-    if user:
-        try:
-            admin_or_user_required()
+# To be completed another time
 
-            # Delete user comment
-            Comment.query.filter_by(user_id=user.id).delete()
-            
-            db.session.delete(user)
-            db.session.commit()
-            return {'Message': 'User deleted successfully'}, 200
-        except Exception as e:
-            abort(401, description=str(e))
+# @auth_bp.route('/<string:username>', methods=['DELETE'])
+# @jwt_required()
+# def delete_user(username):
 
-    else:
-        return {'Error': 'User not found'}, 404
+#     current_user_id = get_jwt_identity()
+
+#     user = User.query.filter_by(username=username).first()
+    
+#     if not user:
+#         return {'Error': 'User not found'}, 404
+
+#     if user.id != current_user_id:
+#         try:
+#             if admin_required():
+#                 # Delete user comments
+#                 Comment.query.filter_by(user_id=user.id).delete()
+
+#                 db.session.delete(user)
+#                 db.session.commit()
+#             return {'Message': 'User deleted successfully'}, 200       
+#         except Exception as e:
+#                 return {'Error': str(e)}, 400
+
+        
+
+
+
+
     
 # View all users admin required
 @auth_bp.route('/')
