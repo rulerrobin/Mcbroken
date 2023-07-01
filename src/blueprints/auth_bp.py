@@ -8,15 +8,29 @@ from init import db, bcrypt
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 
 cli_bp = Blueprint('db', __name__) # unique name, typically __name__ dunder
+auth_bp = Blueprint('auth', __name__, url_prefix='/users') 
 
-auth_bp = Blueprint('auth', __name__) 
+def admin_required():
+    user_id = get_jwt_identity()
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.scalar(stmt)
+    if not (user and user.is_admin):
+        abort(401, description='You must be an admin')
 
-@auth_bp.route('/users')
-@jwt_required
+def admin_or_user_required(user_id):
+    user_id = get_jwt_identity()
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.scalar(stmt)
+    if not (user and (user.is_admin or user_id == user_id)):
+        abort(401, description="You must be an admin or the owner")
+
+
+@auth_bp.route('/')
+@jwt_required()
 def all_users():
     admin_required() # checks if admin otherwise aborted and given a 401 error
     stmt = db.select(User)
-    users = db.session.sclars(stmt)
+    users = db.session.scalars(stmt)
     return UserSchema(many=True, exclude=['password']).dump(users)
 
 @auth_bp.route('/register', methods=['POST']) # Register for account
@@ -60,11 +74,7 @@ def login():
     except KeyError:
         return {'error': 'Email and password are required'}, 400
 
+# @auth_bp.route('/')
 
 
-def admin_required():
-    user_id = get_jwt_identity()
-    stmt = db.select(User).filter_by(id=user_id)
-    user = db.session.scalar(stmt)
-    if not (user and user.is_admin):
-        abort(401, description='You must be an admin')
+        
