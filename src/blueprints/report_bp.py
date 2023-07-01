@@ -46,7 +46,7 @@ def report_machine():
         # Location Details
         location_data = request.json['location']
         location = Location(
-            number=location_data['number'],
+            number=location_data['number'],w
             street=location_data['street'],
             postcode=location_data['postcode'],
             suburb=location_data['suburb'],
