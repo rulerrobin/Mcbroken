@@ -69,17 +69,188 @@ Coder Academy Notes and Slides
 ***
 ## R5 Document all endpoints for your API
 
-Example payload to report a machine
-{
-  "broken": true,
-  "location": {
-    "number": "123",
-    "street": "Main Street",
-    "postcode": "12345",
-    "suburb": "Example Suburb",
-    "state": "Example State"
-  }
-}
+### Endpoints for auth_bp
+
+In auth_bp the endpoints have a default url prefix of users then additional add ons to the endpoints
+
+
+1. `@auth_bp.route('/')`
+
+* **Method**: GET
+* **Identitifier**: None
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows admins to view all users, only admins as it helps with finding users and checking comments of users.
+  
+![All Users Search](imgs/all_users_route.PNG)
+
+![Alt text](imgs/all_users_route_fail.PNG)
+
+2. `@auth_bp.route('/<string:username>')`
+
+* **Method**: GET
+* **Identitifier**: username
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows users and admins to specifically go to a user profile and check comments.
+* 
+![Single User Search](imgs/single_user.PNG)
+
+![User does not exist](imgs/single_user2.PNG)
+
+3. `@auth_bp.route('/register', methods=['POST']) # Register for account`
+
+* **Method**: POST
+* **Identitifier**: None
+* **Authentication**: Password Hashed with the use of Bcrypt
+* **Token**: None
+* **Description**: Adds new user to the database if username or email is not already in use.
+* 
+![Register](imgs/register.PNG)
+
+![If username or email is already in use](imgs/register_fail.PNG)
+
+4. `@auth_bp.route('/login', methods=['POST'])`
+
+* **Method**: POST
+* **Identitifier**: username
+* **Authentication**: username and Password
+* **Token**: Generated with JWT
+* **Description**: Allows users within database (registered) to login and generate a JWT token to access other routes. Username or password being incorrect will lead to an error. An incorrect key may be sent as well however as long as user and password is correct it will let the user login.
+
+![Logged In](imgs/login.PNG)
+
+![Incorrect username or password](imgs/login_fail.PNG)
+
+### Endpoints for report_bp
+
+1. `@reports_bp.route('/')`
+
+* **Method**: GET
+* **Identitifier**: none
+* **Authentication**: None
+* **Token**: None
+* **Description**: Allows users to view all current reports on Mcdonald's Ice Cream Machine locations that are registered in the database and their current status
+* 
+![All reports](imgs/all_reports.PNG)
+
+2. `@reports_bp.route('/<string:suburb>')`
+
+* **Method**: GET
+* **Identitifier**: suburb
+* **Authentication**: None
+* **Token**: None
+* **Description**: Filters the results of the request by suburb so that it only shows the Mcdonald's in a specific suburb.
+* 
+![Suburb Filter](imgs/reports_filtered.PNG)
+
+3. `@reports_bp.route('/broken')`
+
+* **Method**: GET
+* **Identitifier**: broken
+* **Authentication**: None
+* **Token**: None
+* **Description**: Filters the results of the request by only machines that are broken
+* 
+![Broken filter](imgs/reports_broken.PNG)
+
+4. `@reports_bp.route('/working')`
+
+* **Method**: GET
+* **Identitifier**: broken
+* **Authentication**: None
+* **Token**: None
+* **Description**: Filters the results of the request by only machines that are working
+  
+![Alt text](imgs/reports_working.PNG)
+
+5. `@reports_bp.route('/report', methods=['POST'])`
+
+* **Method**: POST
+* **Identitifier**: user_id
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows users to post new locations of Mcdonald's if it is not already in the database and if it is will tell user to either update or search using suburb
+  
+![Location Added](imgs/report_add.PNG)
+
+![Location already in db](imgs/report_add_fail.PNG)
+
+6. `@reports_bp.route('/<int:report_id>', methods=['PUT', 'PATCH'])`
+
+* **Method**: PUT / PATCH
+* **Identitifier**: user_id
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows user's to update current status of Ice cream machines every 15 minutes and also resets upvotes and downvotes of the report once updated. Also advising user to use a boolean if one is not used.
+
+![Upadte success](imgs/update_success.PNG)
+
+![Update Fail](imgs/update_fail.PNG)
+
+![Fail if not bool](imgs/update_fail2.PNG)
+
+7. `@reports_bp.route('/<int:report_id>/upvote', methods=['POST'])`
+
+* **Method**: POST
+* **Identitifier**: user_id
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows users to upvote a report if they wish to show it is a good report.
+
+![Upvote success](imgs/upvote_success.PNG)
+
+![Upvote already done](imgs/upvote_done.PNG)
+  
+8. `@reports_bp.route('/<int:report_id>/downvote', methods=['POST'])`
+
+* **Method**: POST
+* **Identitifier**: user_id
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows users to downvote a report if they wish to show it is a good report.
+
+![Downvote Success](imgs/downvote_success.PNG)
+
+![Downvote already done](imgs/downvote_done.PNG)
+
+9. `@reports_bp.route('/<int:report_id>/comment', methods=['POST'])`
+
+* **Method**: POST
+* **Identitifier**: user_id
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows users to leave comments on reports, it also ensures that comments are not blank when posted.
+
+![Comment posted](imgs/comment_success.PNG)
+
+![Comment empty and doubled](imgs/comment_fail.PNG)
+
+1.  `@reports_bp.route('/<int:report_id>/comment/<int:comment_id>', methods=['PUT', 'PATCH'])`
+
+* **Method**: PUT / PATCH
+* **Identitifier**: user_id
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows users to edit their own comments. Admins are also able to edit other people's comments. Error if comment is empty. 
+
+![Comment_update](imgs/comment_update.PNG)
+
+![Empty Comment error](imgs/comment_update_fail2.PNG)
+
+![Admin or user only](imgs/comment_update_fail1.PNG)
+
+11.  `@reports_bp.route('/<int:report_id>/comment/<int:comment_id>', methods=['DELETE'])`
+
+* **Method**: DELETE
+* **Identitifier**: user_id
+* **Authentication**: @jwt_required
+* **Token**: JWT Access bearer Token Generated when login is successful.
+* **Description**: Allows users to delete their own comments. Admins are also able to delete other people's comments
+
+
+![Admin Or user delete](imgs/delete_fail.PNG)
+
 
 ## R10 Describe the way tasks are allocated and tracked in your project
 
