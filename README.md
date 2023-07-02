@@ -351,27 +351,7 @@ Mcbroken is an API that uses an MVC and is currently represented on the ORM leve
    * One and only one relationship with user: Each vote is allocated to only one user.
    * One and only one relationship with Report: Each vote is allocated to only one report.
    ```python
-    # vote model and schema
-    from init import db, ma
-    from marshmallow import fields
-
-    class Vote(db.Model):
-        __tablename__ = 'votes'
-
-        id = db.Column(db.Integer, primary_key=True)
-        vote_type = db.Column(db.String(10), nullable=False)  # 'upvote' or 'downvote'
-
-        # Foreign Keys
-        user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
-        report_id = db.Column(db.Integer, db.ForeignKey('reports.id', ondelete='CASCADE'))
-
-        # Relationships
-        user = db.relationship('User', backref='votes')
-
-    class VoteSchema(ma.Schema):
-        class Meta:
-            fields = ('id', 'vote_type')
-  ```
+   ```
   
 3. **Report Model**: The report model is responsible for holding reports generated from the user and has relationships with Location, User, Comment and Vote models. The report model when called is the parent of, User, Comment, Vote and Location models.
   It has the following relationships
