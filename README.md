@@ -431,7 +431,7 @@ Mcbroken is an API that uses an MVC and is currently represented on the ORM leve
         class Meta:
             fields = ('id','broken','location','user','time_reported', 'comments', 'upvotes', 'downvotes')
   ```
-  
+
   When the report is called
 
   ```json
@@ -471,16 +471,20 @@ Mcbroken is an API that uses an MVC and is currently represented on the ORM leve
 ***
 ## R9 	Discuss the database relations to be implemented in your application
 
-The database used in the Mcbroken_API contains 5 tables, this originally was 3 tables but then location and vote were added separately because they were needed for flexibility of the implementation. A primary key id is stored in each of the tables and it is the number that represents where to find the record in the table via rows.
+The database used in the Mcbroken_API contains 5 tables, this originally was 3 tables but then location and vote were added separately because they were needed for flexibility of the implementation. A primary key id is stored in each of the tables and it is the number that represents where to find the record in the table via rows it is also what is used as the foreign key in other tables.
 
-1. USER TABLE
+1. **USER TABLE**
    
   ```python
-      id = db.Column(db.Integer, primary_key=True)
-      username = db.Column(db.String(15), nullable=False, unique=True)
-      email = db.Column(db.String(255), nullable=False, unique=True)
-      password = db.Column(db.String(255), nullable=False)
-      is_admin = db.Column(db.Boolean, default=False)
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(15), nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+
+    # Relationships
+    reports = db.relationship('Report', back_populates='user')
+    comments = db.relationship('Comment', back_populates='user', cascade='all, delete')
   ```
   Within the application username and password are important fields because they are used for the purposes of authentication so that a user is able to login with @get_jwt_identity, a token is generated and in this token is the id(primary key) which is stored in an encrypted hash. This id is then used throughout the application as a foreign key for the other tables if needed.
 
@@ -488,6 +492,48 @@ The database used in the Mcbroken_API contains 5 tables, this originally was 3 t
 
   is_admin is a specific boolean for admin users as they are essentially super users that are able to do and use protocols that a non admin user is unable to.
 
+2. **Vote Table**
+   
+  ```python
+    id = db.Column(db.Integer, primary_key=True)
+    vote_type = db.Column(db.String(10), nullable=False)  # 'upvote' or 'downvote'
+
+    # Foreign Keys
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
+    report_id = db.Column(db.Integer, db.ForeignKey('reports.id', ondelete='CASCADE'))
+
+    # Relationships
+    user = db.relationship('User', backref='votes')
+  ```
+  
+  The votes table is related to the reports table because it contains the results of the votes. The vote_type is string because the votes when stored are stored as the string given in the comments only. User_id is is also a part of this as each vote is related to a user so that users can only vote once per report per update (unless they change their vote) and cannot be False.
+
+3. **Report Table**
+
+  ```python
+    id = db.Column(db.Integer, primary_key=True)
+    time_reported = db.Column(db.DateTime, default=datetime.utcnow) # Time and date posted
+    broken = db.Column(db.Boolean, default=False)
+
+    # Foreign Keys
+    location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
+
+    # Do cascade deletes later for links
+    # Relationships
+    location = db.relationship('Location', back_populates='reports', cascade='all, delete')
+    user = db.relationship('User', back_populates='reports', cascade='all, delete')
+    comments = db.relationship('Comment', back_populates='report', cascade='all, delete')
+    votes = db.relationship('Vote', backref='report')
+  ```
+  The Report Table is related to the to the location table because it needs to get the report data from it to present when requested, similar to this user and vote is passed through the report because it is also a child in the relationship when reports are called. 
+
+  Time_reported is a column that is automatically set because it needs to be accurate to when it was originally reported and is also used to check when the report can be udpated again if it gets updated. broken is a boolean because it needs to state if a machine is broken or not to the users when a report is made
+  
+4. Location
+   
+  
+5. Comment
 ***
 
 ## R10 Describe the way tasks are allocated and tracked in your project
