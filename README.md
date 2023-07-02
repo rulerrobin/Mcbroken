@@ -471,7 +471,7 @@ Mcbroken is an API that uses an MVC and is currently represented on the ORM leve
 ***
 ## R9 	Discuss the database relations to be implemented in your application
 
-The database used in the Mcbroken_API contains 5 tables, this originally was 3 tables but then location and vote were added separately because they were needed for flexibility of the implementation. A primary key id is stored in each of the tables and it is the number that represents where to find the record in the table via rows it is also what is used as the foreign key in other tables.
+The database used in the Mcbroken_API contains 5 tables, this originally was 3 tables but then location and vote were added separately because they were needed for flexibility of the implementation. A primary key id is stored in each of the tables and it is the number that represents where to find the record in the table via rows it is also what is used as the foreign key in other tables. Where constraints are given for length consideration has been taken into account for common or max length for these.
 
 1. **USER TABLE**
    
@@ -532,19 +532,80 @@ The database used in the Mcbroken_API contains 5 tables, this originally was 3 t
   
 4. Location
    
-  
+  ```python
+    id = db.Column(db.Integer, primary_key=True)
+    number = db.Column(db.String(10), nullable = False)
+    street = db.Column(db.String(100), nullable = False)
+    postcode = db.Column(db.String(10), nullable = False)
+    suburb = db.Column(db.String(100), nullable = False)
+    state = db.Column(db.String(20), nullable = False)
+
+    # Unique constraint for the combination of all columns
+    __table_args__ = (
+        UniqueConstraint('number', 'street', 'postcode', 'suburb', 'state', name='uq_location_details'),
+    )
+
+    # Do cascade deletes later for links
+    reports = db.relationship('Report', back_populates='location', cascade='all, delete', lazy='dynamic') # lazy part allows for more control(filters)
+    # Relates to report model in db
+  ```
+  The location table is only related to the reports table becuse it is only called through by reports and can only be accessed through reports. The columns are all strings except for the id because when an address is given it is automatically converted to a string and some addresses are more than just integers so it will be able to include all addresses in Australia. There is a constraint that is reasonable for Australia as well.
+
 5. Comment
+  ```python
+      id = db.Column(db.Integer, primary_key=True)
+    comment = db.Column(db.Text)
+    time_posted = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Foreign Keys
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    report_id = db.Column(db.Integer, db.ForeignKey('reports.id', ondelete='CASCADE'), nullable=False)
+
+    # Do cascade deletes later for links
+
+    # Relationships
+    user = db.relationship('User', back_populates='comments')
+    report = db.relationship('Report', back_populates='comments')
+  ```
+
+  This table is related to users and reports as when a user or report is searched the comments are returned as well and relate to the user. Comment is given the constraint of Text because a comment can be a large number of words and text. Time_posted is also under an automatic date time function because it should give users the ability to know when a comment was made to judge if a comment is accurate or not if they are complaining or rejoicing about the machines.
+
 ***
 
 ## R10 Describe the way tasks are allocated and tracked in your project
 
-Day 1 
+The sytem that I used for this project was the new project template in Notion. Notion itself is a productivity software not just limited to project management but has recently came out with a template for project management which I wanted to try and use.
+
+![Start](imgs/PM_Day1.PNG)
+
+In this image each task is separated by project parts and within the tasks I am able to set to do lists, write notes, have links and write comments. 
+
+Status: 
+* Not Started: Not yet started
+* In Progress: Current being completed and still working on it
+* Completed: Completed tasks
+
+In Notion I use dates to plan when I complete things and set date timeframes accordingly to how long things may or may not take, however by the end of the project this turned out to much of the project being pushed to the edge due to scope underestimation as seen in this image below.
+
+Also a public version can be found [Here](https://sleepy-bassoon-a5d.notion.site/3147abbf368e4fabb35675503a09a456?v=815a45cb45eb48b6aca29a5b128b00bf&pvs=4). This is a editable version duplicate of the table that I had.
+
+![Final Timeline](imgs/PM_timeline.PNG)
+
+During the progress of the project I used this as a way to understand how I was going and adjusted tasks in the timeline accordingly.
+
+**TEMPLATE**
+1. What did you get done in the last 24 hours?
+2. What blockers/issues are you having?
+3. What do you plan to do in the next 24 hours?
+4. What is one thing you have learned?
+
+Day 1
 1. Kanban Board
 2. Trying to figure out where to start with the coding portion
 3. ERD Models 
 4. Learned Notions new Project and Tasks model
 
-Day 2 
+Day 2
 1. ERD Models thought out
 2. Unsure as of yet
 3. ERD Diagram and Questions R1-R4
@@ -555,3 +616,63 @@ Day 3
 2. Trying to figure out the correct relationships in model
 3. ERD Diagram and ERD questions
 4. NA
+   
+Day 4
+1. Finish R3
+2. Understanding my ERD
+3. PSQL Database continuing work and starting datapoints
+4. Relearning is something continuous for PSQL and datapoints
+   
+Day 5
+1. Completed base flask APP to start it, mcbroken_api db psql
+2. Remembering how to start the flask app and DB URI flask connections
+3. Finish connections with flask and do models
+4. Watch for typos in everything and start with models before datapoints
+   
+Day 6
+1. Finished basic flask app, init file, .env file
+2. None yet
+3. Finish the basic models
+4. N/A
+
+Day 7
+1. Finished basic models
+2. None yet
+3. Datapoints 
+4. N/A
+
+Day 8
+1. Started user and auth datapoints, finished CLI's for seeding and creation
+2. Do I need to add more tables for datapoints to work properly?
+3. Finish basic datapoints
+4. N/A
+
+Day 9
+1. Found out I needed more tables for flexibility for voting and location
+2. Admin or owner required function not working for deleting users
+3. Add schemas, models, seeding for voting and location
+4. Better to start with more tables than to try and do it easy way without it (separation of concerns via tables rather than variables)
+
+Day 10
+1. Made location and vote 
+2. Admin or owner required function not working for deleting users
+3. Finish datapoints and fix the bugs in them / work to fix with using location and vote relationships as well
+4. back_rep and back_populates are sometimes not interchangeable
+
+Day 11
+1. Finished datapoints and I believe have fixed bugs
+2. Admin or owner required function not working for deleting users
+3. Try and fix final bug as well as do documentation while testing
+4. Test as you go and only add git changes if something works then change something as I had to hard reset to previous code
+
+Day 12
+1. Removed deleting users function 
+2. Stressing over how much documentation and bugging was happening during documentation as I was testing for documentation
+3. Fix the minor bugs
+4. Testing all possibilities is important and I cannot account for everything so I need to learn my scope and cover what I am able to
+
+Final Submission
+1. Finished fixing as many bugs as I could and completed the README.md
+2. None
+3. N/A
+4. Understand the scope and make it fit so that as many bugs can be fixed as possible rather than a large scope with more bugs as not enough time to fix.
