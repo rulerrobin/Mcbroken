@@ -344,7 +344,7 @@ Mcbroken is an API that uses an MVC and is currently represented on the ORM leve
         "is_admin": true,
         "username": "admin"
     },
-    ```
+  ```
 
 2. **Vote Model**: The vote model represents user votes of either "upvote" or "downvote" and has relationships with User and Report models.
    It has the following relationships
