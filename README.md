@@ -3,6 +3,28 @@
 
 ## Installation Instructions
 
+1. Open command line and run `psql -U user` where user is your username for psql
+
+2. Once in the psql command line run `CREATE DATABASE mcbroken_api`
+
+3. Also you will need to know your user and password for the for the DB_URI connection. So you can either create a new user with a new password and grant them privileges or use your current user. You will need to fill in the DB_URI connection as per this template in env.sample
+   
+  `protocol+data base adaptor://user:password@hostname:port/database`
+
+4. Make sure to also connect to your new database using `\c database_name` in psql with database name being the name of your created database
+
+5. Make sure to make an .env file instead of using the .env.sample file else it will not work properly and fill in the details needed.
+
+6. Create a virtual environment using `python3 -m venv .venv` then activate once installed using `source .venv/bin/activate`
+   
+7. Once the virtual environment is running use `pip install -r requirements.txt` to install the required packages from requirements.txt
+
+8. Once the packages have been installed use the following commands to create, seed and run the application
+   1. flask db create
+   2. flask db seed
+   3. flask db run
+
+9. If the instructions were followed you should be able to connect to `127.0.0.1:8080/` on your browser or Postman.
 
 ***
 
