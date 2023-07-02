@@ -1,6 +1,6 @@
 # T2A2 Mcbroken
 ***
-
+[Github Link](https://github.com/rulerrobin/Mcbroken)
 ## Installation Instructions
 
 1. Open command line and run `psql -U user` where user is your username for psql
