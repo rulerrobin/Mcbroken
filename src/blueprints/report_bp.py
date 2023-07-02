@@ -1,6 +1,6 @@
 # create and update reports
 
-from flask import Blueprint, request, abort
+from flask import Blueprint, request
 from sqlalchemy import join
 from models.report import Report, ReportSchema
 from models.location import Location
@@ -8,9 +8,9 @@ from models.user import User
 from models.vote import Vote
 from models.comment import Comment, CommentSchema
 from init import db
-from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
-from .auth_bp import unauthorised_error, admin_required
+from .auth_bp import unauthorised_error
 
 reports_bp = Blueprint('report', __name__, url_prefix='/reports')
 

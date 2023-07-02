@@ -251,6 +251,241 @@ In auth_bp the endpoints have a default url prefix of users then additional add 
 
 ![Admin Or user delete](imgs/delete_fail.PNG)
 
+***
+
+## R6 An ERD for your app
+
+![ERD Diagram](imgs/ERD_Diagram.jpg)
+
+***
+
+## R7 Detail any third party services that your app will use
+
+The there are several third party services that are being used in the application. 
+
+1. **bcrypt**: bcrypt is a password hashing library that allows for passowrds to be securely stored. By using this library when a user is created and a password is stored as well as loaded to check if the password is correct, the actual alphanumeric characters are not shown and are show in an encrpted format.
+   
+   ![Alt text](imgs/bcrypt_example.PNG)
+
+2. **Flask**: A web framework that can be used for Python that provides a flexible approach to building web apps. It is the main service that is being used in the application for the web server, it handles things such as routing and response generation. It also handles things such as intergrating other services with Flask using extensions.
+   
+   1. **Flask-Bcript**: Flask extension that allows the bcrypt library to work with flask and integrates it to simplifying the process of password hashing by using methods designed for Flask apps.
+
+   2. **Flask-JWT-Extended**: Flask extension that adds JWT support to apps that use Flask. Provides more security and authorisation features through generating JWT's which allow users to authenticate through it and access routes that are protected by certain token settings.
+   
+   3. **flask-marshmallow**: Flask extension that integrates Marshmallow with Flask, allowing for an integration with Flask for converting data types such as objects or records to and from JSON and within APi paylods as well, allowing for the interchange between different systems to be seamless
+   
+   4. **flask-SQLAlchemy**: Extension that simplifies use of SQLAlchmey in flask, a SQL toolkit and an ORM library within Flask. The interface is simple to implement and use with databases wich allows developers such as myself to define database models, create and perform queries and manage database relationships in a language that is familiar to themselves.
+   
+3. **Marshmallow**: Marshmallow by itself is a powerful library for serisalisation of objects and deserialisations of them within Python.
+   
+   1. **marshmallow-sqlalchemy**: Exntension for marshmallow that allows SQLAchemy to be used in conjunction with marshmallow. It does this by automatically generating the schemas from the SQLAlchemy models in the python code.
+   
+4. **psycopg2 /psycopg2-binary**: Is an adapter that is popularly used with PostgreSQl for Python which allows the created app to connect to an existing PostreSQL datbase and perform operations on the database. It uses an interface similar to python for interacting with the databases in PostgreSQl which allows for queries to be performed and executed in SQL through Python.
+   
+5. **PyJWT**: A python library that was used for encoding and decoding the JWT that was being created through the JWT extension in flask. It cooperates with it to allow token based authentication within the app when set up.
+   
+6. **python-dotenv**: Simplifies management of environment variables in applications created in Python. Developers are then able to configure variables in a .env file which can be loaded into the app separately ensuring that sensitive details such as keys, config details, etc are kept separate from the codebase and can also have a .sample version with empty variables to ignore the original in git.
+   
+   ![Alt text](imgs/env.sample.PNG)
+
+7. **SQLAlchemy**: It is a SQL toolkil and ORM library for Python, providing a set of tools that have many uses for working with databases and allows for developers to define database models and schemas. 
+   In this example below using SQLAlchemy I am able to create a model and schema for the locations table which is used to create a table in the database I have created through PSQL. It also provides the ability to to include certain argments such as the UniqueConstraint which was used to ensure the location combination of data is unique across the database when a location is registered.
+   
+   ![Locations SQLAlchemy example](imgs/sqlalchemy_example.PNG)
+
+
+***
+## R8 Describe your projects models in terms of the relationships they have with each other
+
+Mcbroken is an API that uses an MVC and is currently represented on the ORM level. The structure of the database is within the models written in Python. There are 5 tables that are being used by Mcbroken. Through the use of SQLAlchemy queries are able to be written in Python to create the table columns, datatypes among other constraints. With Marshmallow as a support it is used to convert the data types from Python and to Python allowing Python and the developer an easier time to manipulate the database.
+
+1. **User Model**: The user model represents user data with relationships to the Report and Comment models and the UserSchema provides a serialisation schema for the User model. When it is called the user model and schema is shown as well as comments as it is a parent when called.
+   
+   It has the following relationships
+   * Zero to many relationship with Reports: A user can have 0 or many reports
+   * Zero to many relationship with Comments: A user can have 0 or many comments
+   * Zero to many relationship with Votes: A user can have 0 or many votes
+
+  ```python
+      # user model and schema 
+  from init import db, ma
+  from marshmallow import fields
+
+  class User(db.Model):
+      __tablename__ = 'users'
+
+      id = db.Column(db.Integer, primary_key=True)
+      username = db.Column(db.String(15), nullable=False, unique=True)
+      email = db.Column(db.String(255), nullable=False, unique=True)
+      password = db.Column(db.String(255), nullable=False)
+      is_admin = db.Column(db.Boolean, default=False)
+
+      # Relationships
+      reports = db.relationship('Report', back_populates='user')
+      comments = db.relationship('Comment', back_populates='user', cascade='all, delete')
+
+
+  # Returning userSchema is only for admins unless searched username is same as user
+  class UserSchema(ma.Schema):
+
+      comments = fields.List(fields.Nested('CommentSchema', exclude=['user']))
+
+      class Meta:
+          fields = ('id', 'username', 'email', 'password', 'is_admin', 'comments')
+
+  ```
+  When a user is called
+  ```JSON
+      {
+        "comments": [],
+        "email": "admin@gmail.com",
+        "id": 1,
+        "is_admin": true,
+        "username": "admin"
+    },
+    ```
+
+2. **Vote Model**: The vote model represents user votes of either "upvote" or "downvote" and has relationships with User and Report models.
+   It has the following relationships
+   * One and only one relationship with user: Each vote is allocated to only one user.
+   * One and only one relationship with Report: Each vote is allocated to only one report.
+   ```python
+    # vote model and schema
+  from init import db, ma
+  from marshmallow import fields
+
+  class Vote(db.Model):
+      __tablename__ = 'votes'
+
+      id = db.Column(db.Integer, primary_key=True)
+      vote_type = db.Column(db.String(10), nullable=False)  # 'upvote' or 'downvote'
+
+      # Foreign Keys
+      user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
+      report_id = db.Column(db.Integer, db.ForeignKey('reports.id', ondelete='CASCADE'))
+
+      # Relationships
+      user = db.relationship('User', backref='votes')
+
+  class VoteSchema(ma.Schema):
+      class Meta:
+          fields = ('id', 'vote_type')
+  ```
+  
+3. **Report Model**: The report model is responsible for holding reports generated from the user and has relationships with Location, User, Comment and Vote models. The report model when called is the parent of, User, Comment, Vote and Location models.
+  It has the following relationships
+   * One and only one relationship with user: Each report can have only one user attached at any time
+   * Zero to many relationship with vote: Each report can have multiple votes at any time
+   * One and only one relationship with location: Each report can have only one location attached at any time
+
+  ```python
+    # report schema
+  from init import db, ma
+  from marshmallow import fields
+  from datetime import datetime
+
+  class Report(db.Model):
+      __tablename__ = 'reports'
+
+      id = db.Column(db.Integer, primary_key=True)
+      time_reported = db.Column(db.DateTime, default=datetime.utcnow) # Time and date posted
+      broken = db.Column(db.Boolean, default=False)
+
+      # Foreign Keys
+      location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
+      user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
+
+      # Do cascade deletes later for links
+      # Relationships
+      location = db.relationship('Location', back_populates='reports', cascade='all, delete')
+      user = db.relationship('User', back_populates='reports', cascade='all, delete')
+      comments = db.relationship('Comment', back_populates='report', cascade='all, delete')
+      votes = db.relationship('Vote', backref='report')
+
+  # Returning userSchema is only for admins unless searched username is same as user
+  class ReportSchema(ma.Schema):
+
+      # Schema Connections
+      location = fields.Nested('LocationSchema')
+      user = fields.Nested('UserSchema', exclude=['id', 'email', 'password', 'is_admin'])
+      comments = fields.List(fields.Nested('CommentSchema'))
+
+      # Formats time to readable string
+      time_reported = fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+
+      # add a field for votes
+      upvotes = fields.Method("get_upvotes")
+      downvotes = fields.Method("get_downvotes")
+
+      # Count the votes
+      def get_upvotes(self, obj):
+          return len([vote for vote in obj.votes if vote.vote_type == "upvote"])
+
+      def get_downvotes(self, obj):
+          return len([vote for vote in obj.votes if vote.vote_type == "downvote"])
+
+
+
+      class Meta:
+          fields = ('id','broken','location','user','time_reported', 'comments', 'upvotes', 'downvotes')
+  ```
+  When the report is called
+  ```json
+      {
+        "broken": false,
+        "comments": [],
+        "downvotes": 0,
+        "id": 3,
+        "location": {
+            "id": 3,
+            "number": "G2/620",
+            "postcode": "3000",
+            "state": "Victoria",
+            "street": "Collins Street",
+            "suburb": "Melbourne"
+        },
+        "time_reported": "2023-07-02 00:12:27",
+        "upvotes": 1,
+        "user": {
+            "comments": [],
+            "username": "Jane"
+        }
+    }
+  ```
+
+4. **Location Model**: The location model is associated with only reports and represents the location data of a report.
+   It has the following relationships
+   * One and only one relationship with report: Each location can only be linked to one report at any time.
+  
+
+5. **Comment Model**: The vote model represents user comments within a report.
+   It has the following relationships
+   * Zero to many relationship with User: Each user can have multiple comments
+   * Zero to many relationship with Report: Each report can have multiple comments
+  
+
+***
+## R9 	Discuss the database relations to be implemented in your application
+
+The database used in the Mcbroken_API contains 5 tables, this originally was 3 tables but then location and vote were added separately because they were needed for flexibility of the implementation. A primary key id is stored in each of the tables and it is the number that represents where to find the record in the table via rows.
+
+1. USER TABLE
+   
+  ```python
+      id = db.Column(db.Integer, primary_key=True)
+      username = db.Column(db.String(15), nullable=False, unique=True)
+      email = db.Column(db.String(255), nullable=False, unique=True)
+      password = db.Column(db.String(255), nullable=False)
+      is_admin = db.Column(db.Boolean, default=False)
+  ```
+  Within the application username and password are important fields because they are used for the purposes of authentication so that a user is able to login with @get_jwt_identity, a token is generated and in this token is the id(primary key) which is stored in an encrypted hash. This id is then used throughout the application as a foreign key for the other tables if needed.
+
+  The username and email are unique because they are the key pieces of data that a user will be using to login. The datatypes of username, email and password also strings as they are information used by the user and inputted by them and cannot be null due to this. 
+
+  is_admin is a specific boolean for admin users as they are essentially super users that are able to do and use protocols that a non admin user is unable to.
+
+***
 
 ## R10 Describe the way tasks are allocated and tracked in your project
 

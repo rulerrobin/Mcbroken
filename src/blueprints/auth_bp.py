@@ -6,7 +6,7 @@ from models.user import User, UserSchema
 from models.comment import Comment
 from sqlalchemy.exc import IntegrityError
 from init import db, bcrypt
-from flask_jwt_extended import jwt_required, get_jwt_identity, current_user, create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 
 cli_bp = Blueprint('db', __name__) # unique name, typically __name__ dunder
 auth_bp = Blueprint('auth', __name__, url_prefix='/users') 
