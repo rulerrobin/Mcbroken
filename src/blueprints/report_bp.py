@@ -10,7 +10,7 @@ from models.comment import Comment, CommentSchema
 from init import db
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from datetime import datetime, timedelta
-from .auth_bp import unauthorised_error
+from .auth_bp import unauthorised_error, admin_required
 
 reports_bp = Blueprint('report', __name__, url_prefix='/reports')
 
@@ -31,7 +31,7 @@ def all_reports():
     return ReportSchema(many=True).dump(reports) 
 
 # Suburb Filter
-@reports_bp.route('/suburb/<string:suburb>')
+@reports_bp.route('/<string:suburb>')
 def suburb_filter(suburb):
     # Join table to get all locations in a certain suburb
     stmt = db.select(Report).select_from(join(Report, Location)).where(Location.suburb==suburb)
@@ -76,7 +76,7 @@ def report_machine():
         ).first()
 
         if existing_location: # IF location combination exists returns and gives error
-            return {'error': 'Report already exists for this location, please search using /reports/suburb/"suburb Mcdonald\s is from"'}, 409
+            return {'error': 'Report already exists for this location, please search using /"suburb Mcdonalds is from" then update using report/id/update if needing an update'}, 409
 
         # Location adding if above is False
         location = Location(
@@ -91,7 +91,7 @@ def report_machine():
         db.session.add(report)
         db.session.commit()
 
-        return 'Broken machine report added successfully'
+        return 'Machine report added successfully'
     except Exception as e:
         # Handle other exceptions
         return {'error': str(e)}, 500
@@ -115,6 +115,10 @@ def update_report(report_id):
 
     # Update the report 
     report_info = ReportSchema().load(request.json)
+    broken = report_info.get('broken')
+    if broken is None or not isinstance(broken, bool):
+            return {'error': 'Please use a boolean value for "broken"'}, 400    
+
     report.broken = report_info['broken'] # Update boolean value
 
     # Update report/update time
@@ -209,6 +213,9 @@ def create_comment(report_id):
     # Get the comment data from the request
     comment_info = request.json
     
+    if 'comment' not in comment_info or len(comment_info['comment']) == 0:
+        return {'error': 'Invalid update'}, 400  
+
     # Create comment
     comment = Comment (
         comment = comment_info ['comment'],
@@ -220,7 +227,7 @@ def create_comment(report_id):
     db.session.add(comment)
     db.session.commit()
 
-    return 'Comment posted added successfully'
+    return {'Message': 'Comment posted added successfully'}
 
 # Edit commments
 @reports_bp.route('/<int:report_id>/comment/<int:comment_id>', methods=['PUT', 'PATCH'])
@@ -244,37 +251,36 @@ def edit_comment(report_id, comment_id):
     if comment.user_id != current_user_id:
         return unauthorised_error()
 
+    if 'comment' not in comment_info or len(comment_info['comment']) == 0:
+        return {'error': 'Invalid update'}, 400
+
     # Update comment
     comment.comment = comment_info['comment']
     db.session.commit()
 
-    return 'Comment updated successfully'
+    return {'Message:': 'Comment updated successfully'}
 
 
 # Delete Comments
 @reports_bp.route('/<int:report_id>/comment/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(report_id, comment_id):
-
-    # Check if user is authorised
-
-
     report = Report.query.get(report_id)
     if not report:
         return report_not_found_error()
 
     comment = Comment.query.filter_by(id=comment_id, report_id=report_id).first()
-
     if not comment:
         return comment_not_found_error()
-    
-    current_user_id = get_jwt_identity()
 
-    if comment.user_id != current_user_id:
-        return unauthorised_error()    
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    if comment.user_id != current_user_id and not current_user.is_admin:
+        return unauthorised_error()
 
     # Delete the comment
     db.session.delete(comment)
     db.session.commit()
 
-    return 'Comment deleted successfully'
+    return {'Message': 'Comment deleted successfully'}

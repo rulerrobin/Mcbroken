@@ -54,12 +54,7 @@ def admin_or_user_required():
 #         except Exception as e:
 #                 return {'Error': str(e)}, 400
 
-        
-
-
-
-
-    
+       
 # View all users admin required
 @auth_bp.route('/')
 @jwt_required()
@@ -105,11 +100,7 @@ def register():
         return {"Message": "Registration Successful", "user" : UserSchema(exclude=['password', 'is_admin']).dump(user)}, 201
     except IntegrityError as e:
         if 'email' in str(e) and 'username' in str(e):
-            return {'error': 'Email address and username already in use'}, 409
-        elif 'username' in str(e):
-            return {'error': 'Username already in use'}, 409
-        elif 'email' in str(e):
-            return {'error': 'Email address already in use'}, 409        
+            return {'error': 'Email address or username already in use'}, 409
 
 
 # Login to account
@@ -123,9 +114,9 @@ def login():
             token = create_access_token(identity=user.id, expires_delta=timedelta(days=1))
             return {'token': token, 'user': UserSchema(exclude=['password', 'comments']).dump(user)}
         else:
-            return {'error': 'Invalid email address or password'}, 401        
+            return {'error': 'Invalid username address or password'}, 401        
     except KeyError:
-        return {'error': 'Email and password are required'}, 400
+        return {'error': 'Username and password are required'}, 400
 
 
 
